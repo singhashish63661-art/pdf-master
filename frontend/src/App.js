@@ -26,10 +26,10 @@ function Login({ setUserEmail }) {
     setLoading(true);
     try {
       if (isLogin) {
-        const res = await axios.post('http://127.0.0.1:8000/login', { email, password });
+        const res = await axios.post('https://pdf-master-7yw7.onrender.com/login', { email, password });
         setUserEmail(res.data.email); navigate('/'); 
       } else {
-        await axios.post('http://127.0.0.1:8000/signup', { email, password });
+        await axios.post('https://pdf-master-7yw7.onrender.com/signup', { email, password });
         alert("Account created!"); setIsLogin(true); setPassword(''); 
       }
     } catch (err) { alert(`🚨 ERROR: ${err.response?.data?.detail || err.message}`); } 
@@ -38,7 +38,7 @@ function Login({ setUserEmail }) {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     const decoded = jwtDecode(credentialResponse.credential);
-    try { await axios.post('http://127.0.0.1:8000/signup', { email: decoded.email, password: 'google_oauth_user' }); } catch (e) {}
+    try { await axios.post('https://pdf-master-7yw7.onrender.com/signup', { email: decoded.email, password: 'google_oauth_user' }); } catch (e) {}
     setUserEmail(decoded.email); navigate('/');
   };
 
@@ -161,7 +161,7 @@ function Dashboard() {
 
 function AccountDashboard({ userEmail }) {
   const [history, setHistory] = useState([]);
-  useEffect(() => { axios.get(`http://127.0.0.1:8000/api/history/${userEmail}`).then(res => setHistory(res.data)); }, [userEmail]);
+  useEffect(() => { axios.get(`https://pdf-master-7yw7.onrender.com/api/history/${userEmail}`).then(res => setHistory(res.data)); }, [userEmail]);
   const emailParts = userEmail ? userEmail.split('@') : ["User", "Email"];
 
   return (
@@ -209,7 +209,7 @@ function AccountDashboard({ userEmail }) {
 
 function AdminDashboard() {
   const [stats, setStats] = useState(null);
-  useEffect(() => { axios.get(`http://127.0.0.1:8000/api/admin/stats`).then(res => setStats(res.data)); }, []);
+  useEffect(() => { axios.get(`https://pdf-master-7yw7.onrender.com/api/admin/stats`).then(res => setStats(res.data)); }, []);
   if (!stats) return <div>Loading...</div>;
 
   return (
@@ -249,7 +249,7 @@ function ToolTemplate({ title, desc, accept, isMultiple, endpoint, outputExt = "
   const [files, setFiles] = useState([]); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if (files.length === 0) return; setIsProcessing(true); const formData = new FormData(); for (let i = 0; i < files.length; i++) formData.append(isMultiple ? 'files' : 'file', files[i]); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/${endpoint}`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `Result${outputExt}`); document.body.appendChild(link); link.click(); navigate('/'); } catch (error) { alert("Error"); } finally { setIsProcessing(false); } 
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/${endpoint}`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `Result${outputExt}`); document.body.appendChild(link); link.click(); navigate('/'); } catch (error) { alert("Error"); } finally { setIsProcessing(false); } 
   };
   return (
     <div className="tool-workspace">
@@ -266,7 +266,7 @@ function CustomInputTool({ title, desc, endpoint, inputName, inputPlaceholder, u
   const [files, setFiles] = useState([]); const [inputValue, setInputValue] = useState(isCheckbox ? 'false' : ''); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if (files.length === 0) return; setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append(inputName, inputValue); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/${endpoint}`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Result.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch (error) { alert("Error"); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/${endpoint}`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Result.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch (error) { alert("Error"); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -291,7 +291,7 @@ function WatermarkPDF({ userEmail }) {
   const [files, setFiles] = useState([]); const [text, setText] = useState('CONFIDENTIAL'); const [position, setPosition] = useState('center'); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if (files.length === 0) return; setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('text', text); formData.append('position', position); formData.append('user_email', userEmail);
-    try { const response = await axios.post('http://127.0.0.1:8000/api/watermark', formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Watermarked.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch(err) { alert("Error."); } finally { setIsProcessing(false); }
+    try { const response = await axios.post('https://pdf-master-7yw7.onrender.com/api/watermark', formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Watermarked.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch(err) { alert("Error."); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -310,7 +310,7 @@ function TextExtractionTool({ title, desc, endpoint, isTranslate, userEmail }) {
   const [files, setFiles] = useState([]); const [lang, setLang] = useState('es'); const [text, setText] = useState(''); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if(files.length===0)return; setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('user_email', userEmail); if (isTranslate) formData.append('lang', lang);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/${endpoint}`, formData); setText(response.data.text); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/${endpoint}`, formData); setText(response.data.text); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -329,7 +329,7 @@ function SignPDF({ userEmail }) {
   const [pdfFile, setPdfFile] = useState(null); const [imgFile, setImgFile] = useState(null); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if (!pdfFile || !imgFile) return alert("Upload both files!"); setIsProcessing(true); const formData = new FormData(); formData.append('file', pdfFile); formData.append('signature', imgFile); formData.append('user_email', userEmail);
-    try { const response = await axios.post('http://127.0.0.1:8000/api/sign', formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Signed.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
+    try { const response = await axios.post('https://pdf-master-7yw7.onrender.com/api/sign', formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Signed.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -349,7 +349,7 @@ function AtsScanner({ userEmail }) {
   const [files, setFiles] = useState([]); const [result, setResult] = useState(null); const [isProcessing, setIsProcessing] = useState(false);
   const handleProcess = async () => {
     setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/ats-scan`, formData); setResult(response.data); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/ats-scan`, formData); setResult(response.data); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -374,7 +374,7 @@ function ComparePDF({ userEmail }) {
   const [files, setFiles] = useState([]); const [result, setResult] = useState(null); const [isProcessing, setIsProcessing] = useState(false);
   const handleProcess = async () => {
     if(files.length !== 2) return alert("Upload EXACTLY 2 PDFs!"); setIsProcessing(true); const formData = new FormData(); formData.append('files', files[0]); formData.append('files', files[1]); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/compare`, formData); setResult(response.data); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/compare`, formData); setResult(response.data); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -402,7 +402,7 @@ function WorkflowBuilder({ userEmail }) {
   const handleProcess = async () => {
     if (files.length === 0) return alert("Upload a PDF first!"); const actionList = Object.keys(actions).filter(k => actions[k]); if (actionList.length === 0) return alert("Select at least one action!");
     setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('actions', JSON.stringify(actionList)); formData.append('watermark_text', watermarkText); formData.append('password', password); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/workflow`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Final_Workflow.pdf'); document.body.appendChild(link); link.click(); window.location.href = '/'; } catch (error) { alert("Workflow failed."); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/workflow`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Final_Workflow.pdf'); document.body.appendChild(link); link.click(); window.location.href = '/'; } catch (error) { alert("Workflow failed."); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
@@ -428,7 +428,7 @@ function ChatWithPDF({ userEmail }) {
   const handleProcess = async (e) => {
     e.preventDefault(); if (files.length === 0 || !question) return; const newLog = [...chatLog, { role: 'user', text: question }]; setChatLog(newLog); setQuestion(''); setIsProcessing(true);
     const formData = new FormData(); formData.append('file', files[0]); formData.append('question', question); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`http://127.0.0.1:8000/api/chat`, formData); setChatLog([...newLog, { role: 'ai', text: response.data.answer }]); } catch(err) { alert("Error."); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`https://pdf-master-7yw7.onrender.com/api/chat`, formData); setChatLog([...newLog, { role: 'ai', text: response.data.answer }]); } catch(err) { alert("Error."); } finally { setIsProcessing(false); }
   };
   return (
     <div className="tool-workspace">
