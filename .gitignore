@@ -1,0 +1,8 @@
+node_modules/
+backend/venv/
+__pycache__/
+users.db
+*.pdf
+*.zip
+*.mp3
+temp_*
