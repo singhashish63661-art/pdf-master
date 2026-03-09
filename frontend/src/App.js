@@ -18,7 +18,7 @@ function LoadingOverlay({ message }) {
 }
 
 function Login({ setUserEmail }) {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState('login'); // 'login', 'signup', or 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,12 +28,17 @@ function Login({ setUserEmail }) {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
+      if (authMode === 'login') {
         const res = await axios.post(`${API_URL}/login`, { email, password });
         setUserEmail(res.data.email); navigate('/'); 
-      } else {
+      } else if (authMode === 'signup') {
         await axios.post(`${API_URL}/signup`, { email, password });
-        alert("Account created!"); setIsLogin(true); setPassword(''); 
+        alert("Account created! You can now log in."); setAuthMode('login'); setPassword(''); 
+      } else if (authMode === 'reset') {
+        // THE NEW FORGOT PASSWORD LOGIC!
+        await axios.post(`${API_URL}/api/reset-password`, { email: email, new_password: password });
+        alert("Password successfully reset! Please log in with your new password.");
+        setAuthMode('login'); setPassword('');
       }
     } catch (err) { alert(`🚨 ERROR: ${err.response?.data?.detail || err.message}`); } 
     finally { setLoading(false); }
@@ -51,19 +56,45 @@ function Login({ setUserEmail }) {
         <div style={{ fontSize: '32px', marginBottom: '20px' }}>📄</div>
         <h2>Welcome to PDF Master</h2>
         <p>The enterprise workspace for document engineering.</p>
-        <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert('Failed')} theme={document.body.getAttribute('data-theme') === 'dark' ? 'filled_black' : 'outline'} width="100%" />
-        <div className="divider">OR USE EMAIL</div>
+        
+        {authMode === 'login' && (
+          <>
+            <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert('Failed')} theme={document.body.getAttribute('data-theme') === 'dark' ? 'filled_black' : 'outline'} width="100%" />
+            <div className="divider">OR USE EMAIL</div>
+          </>
+        )}
+        
         <form onSubmit={handleSubmit}>
-          <label className="auth-label">Work Email</label>
-          <input className="input-field" type="email" placeholder="name@company.com" value={email} onChange={e => setEmail(e.target.value)} required />
-          <label className="auth-label">Password</label>
-          <input className="input-field" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
-          <button className="upload-btn" type="submit" disabled={loading}>{loading ? "Wait..." : (isLogin ? "Sign In" : "Create Free Account")}</button>
+          <div style={{ textAlign: 'left', marginBottom: '20px' }}>
+            <label className="auth-label">Email Address</label>
+            <input className="input-field" style={{ margin: 0, width: '100%', boxSizing: 'border-box' }} type="email" placeholder="name@company.com" value={email} onChange={e => setEmail(e.target.value)} required />
+          </div>
+          <div style={{ textAlign: 'left', marginBottom: '10px' }}>
+            <label className="auth-label">{authMode === 'reset' ? 'Enter New Password' : 'Password'}</label>
+            <input className="input-field" style={{ margin: 0, width: '100%', boxSizing: 'border-box' }} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+          </div>
+          
+          {/* FORGOT PASSWORD LINK */}
+          {authMode === 'login' && (
+            <div style={{ textAlign: 'right', marginBottom: '20px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setAuthMode('reset')}>
+                Forgot password?
+              </span>
+            </div>
+          )}
+          {authMode !== 'login' && <div style={{ marginBottom: '20px' }}></div>}
+
+          <button className="upload-btn" type="submit" disabled={loading}>
+            {loading ? "Please wait..." : authMode === 'login' ? "Sign In" : authMode === 'signup' ? "Create Free Account" : "Reset Password"}
+          </button>
         </form>
-        <p style={{ marginTop: '20px', fontSize: '13px', color: 'var(--text-muted)' }}>
-          {isLogin ? "New here? " : "Already have an account? "}
-          <span style={{ color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setIsLogin(!isLogin)}>{isLogin ? "Sign up" : "Log in"}</span>
-        </p>
+
+        <div className="auth-footer">
+          {authMode === 'login' ? "Don't have an account? " : "Back to "}
+          <span className="auth-link" onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setPassword(''); }}>
+            {authMode === 'login' ? "Sign up" : "Log in"}
+          </span>
+        </div>
       </div>
     </div>
   );

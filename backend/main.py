@@ -66,16 +66,26 @@ async def signup(data: dict):
         raise HTTPException(status_code=400, detail="User already exists")
     finally: conn.close()
 
-@app.post("/login")
-async def login(data: dict):
-    email, password = data.get("email"), data.get("password")
+@app.post("/api/reset-password")
+async def reset_password(data: dict):
+    email = data.get("email")
+    new_password = data.get("new_password")
+    
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email=? AND password=?", (email, hash_password(password)))
-    user = cursor.fetchone()
+    
+    # Check if user actually exists first
+    cursor.execute("SELECT * FROM users WHERE email=?", (email,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Email not found in our system.")
+        
+    # Update their password to the new one!
+    cursor.execute("UPDATE users SET password=? WHERE email=?", (hash_password(new_password), email))
+    conn.commit()
     conn.close()
-    if user: return {"message": "Login successful", "email": email}
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    return {"message": "Password reset successfully!"}
 
 @app.get("/api/history/{email}")
 async def get_history(email: str):
