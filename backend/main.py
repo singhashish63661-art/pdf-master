@@ -11,10 +11,10 @@ import sqlite3
 import hashlib
 import io
 import json
-import difflib # NEW: For comparing PDFs!
+import difflib 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-import fitz  # PyMuPDF
+import fitz  
 from deep_translator import GoogleTranslator
 from gtts import gTTS
 import qrcode
@@ -24,14 +24,15 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://pdf-master-lemon.vercel.app"  # <--- YOUR NEW LIVE APP!
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000", 
+        "http://localhost:8080",
+        "https://pdf-master-lemon.vercel.app" # YOUR VERCEL LINK
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-) 
+)
 
 def init_db():
     conn = sqlite3.connect("users.db")
@@ -66,6 +67,18 @@ async def signup(data: dict):
         raise HTTPException(status_code=400, detail="User already exists")
     finally: conn.close()
 
+@app.post("/login")
+async def login(data: dict):
+    email, password = data.get("email"), data.get("password")
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email=? AND password=?", (email, hash_password(password)))
+    user = cursor.fetchone()
+    conn.close()
+    if user: return {"message": "Login successful", "email": email}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+
+# THE NEW PASSWORD RESET ROUTE!
 @app.post("/api/reset-password")
 async def reset_password(data: dict):
     email = data.get("email")
@@ -73,18 +86,15 @@ async def reset_password(data: dict):
     
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    
-    # Check if user actually exists first
     cursor.execute("SELECT * FROM users WHERE email=?", (email,))
+    
     if not cursor.fetchone():
         conn.close()
-        raise HTTPException(status_code=404, detail="Email not found in our system.")
+        raise HTTPException(status_code=404, detail="Email not found. Please create an account.")
         
-    # Update their password to the new one!
     cursor.execute("UPDATE users SET password=? WHERE email=?", (hash_password(new_password), email))
     conn.commit()
     conn.close()
-    
     return {"message": "Password reset successfully!"}
 
 @app.get("/api/history/{email}")
@@ -416,83 +426,58 @@ async def process_workflow(file: UploadFile = File(...), actions: str = Form(...
     log_user_action(user_email, f"Ran Workflow", file.filename)
     return FileResponse(output_path, media_type="application/pdf", filename="Workflow_Result.pdf")
 
-# ==========================================
-# THE 4 NEW "NICHE" ENTERPRISE TOOLS 🔥
-# ==========================================
-
-# 1. ATS RESUME SCANNER 📄🤖
 @app.post("/api/ats-scan")
 async def ats_scan(file: UploadFile = File(...), user_email: Optional[str] = Form(None)):
     reader = PdfReader(file.file)
     text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()]).lower()
-    
-    # Analyze the Resume Data
     word_count = len(text.split())
     action_verbs = ["managed", "led", "developed", "created", "designed", "improved", "increased", "optimized", "built", "spearheaded", "orchestrated"]
     found_verbs = [v for v in action_verbs if v in text]
-    
-    # Calculate Score
     score = 50 
-    score += min(len(found_verbs) * 4, 30) # Up to 30 points for verbs
-    if 300 < word_count < 1000: score += 20 # 20 points for good length
-    
+    score += min(len(found_verbs) * 4, 30) 
+    if 300 < word_count < 1000: score += 20 
     feedback = f"Your resume has {word_count} words. "
     if len(found_verbs) > 4: feedback += "Great use of action verbs! "
     else: feedback += "Try adding more strong verbs like 'Managed', 'Developed', or 'Increased'. "
-    
     log_user_action(user_email, "Ran ATS Resume Scan", file.filename)
     return {"score": score, "feedback": feedback, "verbs_found": len(found_verbs)}
 
-# 2. COMPARE TWO PDFs ⚖️
 @app.post("/api/compare")
 async def compare_pdfs(files: list[UploadFile] = File(...), user_email: Optional[str] = Form(None)):
     if len(files) != 2: raise HTTPException(status_code=400, detail="Please upload exactly 2 files.")
-    
     text1 = "\n".join([page.extract_text() for page in PdfReader(files[0].file).pages])
     text2 = "\n".join([page.extract_text() for page in PdfReader(files[1].file).pages])
-    
-    # Use python's built in Diff tool to find the exact differences
     diff = list(difflib.ndiff(text1.splitlines(), text2.splitlines()))
-    
     added = [l[2:] for l in diff if l.startswith('+ ') and l[2:].strip()]
     removed = [l[2:] for l in diff if l.startswith('- ') and l[2:].strip()]
-    
     log_user_action(user_email, "Compared PDFs", f"{files[0].filename} vs {files[1].filename}")
     return {"added": added[:10], "removed": removed[:10], "total_changes": len(added) + len(removed)}
 
-# 3. METADATA HACKER 🕵️‍♂️
 @app.post("/api/metadata")
 async def modify_metadata(file: UploadFile = File(...), title: str = Form(""), author: str = Form(""), wipe: str = Form("false"), user_email: Optional[str] = Form(None)):
     input_path = f"temp_{file.filename}"
     with open(input_path, "wb") as f: f.write(await file.read())
-    
     doc = fitz.open(input_path)
-    
     if wipe == "true":
-        doc.set_metadata({}) # Wipes everything clean!
+        doc.set_metadata({}) 
     else:
         meta = doc.metadata
         if title: meta["title"] = title
         if author: meta["author"] = author
         doc.set_metadata(meta)
-        
     doc.save("Metadata_Changed.pdf")
     os.remove(input_path)
     log_user_action(user_email, "Modified Metadata", file.filename)
     return FileResponse("Metadata_Changed.pdf", media_type="application/pdf", filename="Clean_Metadata.pdf")
 
-# 4. ADD PAGE NUMBERS 🔢
 @app.post("/api/add-page-numbers")
 async def add_page_numbers(file: UploadFile = File(...), user_email: Optional[str] = Form(None)):
     input_path = f"temp_{file.filename}"
     with open(input_path, "wb") as f: f.write(await file.read())
-    
     doc = fitz.open(input_path)
     for i, page in enumerate(doc):
         w, h = page.rect.width, page.rect.height
-        # Draw "Page 1" at the bottom center of the page
         page.insert_text((w / 2 - 20, h - 30), f"Page {i + 1}", fontsize=11, color=(0,0,0))
-        
     doc.save("Numbered.pdf")
     os.remove(input_path)
     log_user_action(user_email, "Added Page Numbers", file.filename)
