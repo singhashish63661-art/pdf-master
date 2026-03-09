@@ -17,6 +17,7 @@ function LoadingOverlay({ message }) {
   );
 }
 
+// --- ENTERPRISE LOGIN PAGE (Email Only) ---
 function Login({ setUserEmail }) {
   const [authMode, setAuthMode] = useState('login'); // 'login', 'signup', or 'reset'
   const [email, setEmail] = useState('');
@@ -35,7 +36,6 @@ function Login({ setUserEmail }) {
         await axios.post(`${API_URL}/signup`, { email, password });
         alert("Account created! You can now log in."); setAuthMode('login'); setPassword(''); 
       } else if (authMode === 'reset') {
-        // THE NEW FORGOT PASSWORD LOGIC!
         await axios.post(`${API_URL}/api/reset-password`, { email: email, new_password: password });
         alert("Password successfully reset! Please log in with your new password.");
         setAuthMode('login'); setPassword('');
@@ -44,25 +44,12 @@ function Login({ setUserEmail }) {
     finally { setLoading(false); }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
-    try { await axios.post(`${API_URL}/signup`, { email: decoded.email, password: 'google_oauth_user' }); } catch (e) {}
-    setUserEmail(decoded.email); navigate('/');
-  };
-
   return (
     <div className="auth-layout-min">
       <div className="auth-box-min">
-        <div style={{ fontSize: '32px', marginBottom: '20px' }}>📄</div>
+        <div style={{ fontSize: '42px', marginBottom: '15px' }}>📄</div>
         <h2>Welcome to PDF Master</h2>
-        <p>The enterprise workspace for document engineering.</p>
-        
-        {authMode === 'login' && (
-          <>
-            <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert('Failed')} theme={document.body.getAttribute('data-theme') === 'dark' ? 'filled_black' : 'outline'} width="100%" />
-            <div className="divider">OR USE EMAIL</div>
-          </>
-        )}
+        <p style={{marginBottom: '40px'}}>The enterprise workspace for document engineering.</p>
         
         <form onSubmit={handleSubmit}>
           <div style={{ textAlign: 'left', marginBottom: '20px' }}>
