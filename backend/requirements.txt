@@ -9,3 +9,4 @@ PyMuPDF
 deep-translator
 gTTS
 qrcode[pil]
+psycopg2-binary

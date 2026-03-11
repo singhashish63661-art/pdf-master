@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
 import './App.css';
 
-// THE LIVE RENDER BACKEND URL
 const API_URL = "https://pdf-master-7yw7.onrender.com";
 
 function LoadingOverlay({ message }) {
@@ -17,9 +14,8 @@ function LoadingOverlay({ message }) {
   );
 }
 
-// --- ENTERPRISE LOGIN PAGE (Email Only) ---
 function Login({ setUserEmail }) {
-  const [authMode, setAuthMode] = useState('login'); // 'login', 'signup', or 'reset'
+  const [authMode, setAuthMode] = useState('login'); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,7 +57,6 @@ function Login({ setUserEmail }) {
             <input className="input-field" style={{ margin: 0, width: '100%', boxSizing: 'border-box' }} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
           
-          {/* FORGOT PASSWORD LINK */}
           {authMode === 'login' && (
             <div style={{ textAlign: 'right', marginBottom: '20px' }}>
               <span style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setAuthMode('reset')}>
@@ -186,10 +181,10 @@ function AccountDashboard({ userEmail, setUserEmail }) {
     <div className="container" style={{ maxWidth: '1100px', marginTop: '40px', flex: 1 }}>
       <button className="btn-secondary" onClick={() => navigate('/')}>← Back to Dashboard</button>
       <div style={{ display: 'flex', gap: '40px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div style={{ flex: '1 1 350px', maxWidth: '100%' }}>
-          <div style={{ background: 'var(--card-bg)', padding: '40px 20px', borderRadius: '16px', border: '1px solid var(--border-color)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+        <div className="account-card-left">
+          <div style={{ background: 'var(--card-bg)', padding: '40px 30px', borderRadius: '16px', border: '1px solid var(--border-color)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
             <div className="avatar-huge" style={{ margin: '0 auto 20px auto', width: '90px', height: '90px', fontSize: '36px', background: 'var(--accent)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{userEmail ? userEmail[0].toUpperCase() : "U"}</div>
-            <div style={{ marginBottom: '25px', background: 'var(--bg-hover)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border-color)' }}><h2 style={{ margin: '0', color: 'var(--text-main)', fontSize: '20px', fontWeight: '800' }}>{emailParts[0]}</h2><p style={{ margin: '5px 0 0 0', color: 'var(--text-muted)', fontSize: '15px', fontWeight: '500' }}>@{emailParts[1]}</p></div>
+            <div style={{ marginBottom: '25px', background: 'var(--bg-hover)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border-color)' }}><h2 className="account-email-text" style={{ margin: '0', color: 'var(--text-main)', fontSize: '20px', fontWeight: '800' }}>{emailParts[0]}</h2><p style={{ margin: '5px 0 0 0', color: 'var(--text-muted)', fontSize: '15px', fontWeight: '500' }}>@{emailParts[1]}</p></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', padding: '0 10px' }}><span style={{ color: 'var(--text-muted)' }}>Files Processed</span><span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '18px' }}>{history.length}</span></div>
             <button className="upload-btn" style={{ width: '100%', background: 'transparent', color: '#ef4444', border: '2px solid #ef4444', boxShadow: 'none', marginTop: '20px' }} onClick={() => { setUserEmail(null); navigate('/login'); }}>Log Out</button>
           </div>
@@ -232,15 +227,16 @@ function AdminDashboard() {
   );
 }
 
-// --- SHARED UPLOAD COMPONENTS ---
 function MassiveDropzone({ accept, isMultiple, onFilesSelected, files }) {
-  const fileInputRef = useRef(null); const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null); 
+  const [isDragging, setIsDragging] = useState(false);
   const handleDrop = (e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files && e.dataTransfer.files.length > 0) onFilesSelected(Array.from(e.dataTransfer.files)); };
   return (
     <div className="drop-zone" onClick={() => fileInputRef.current.click()} onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }} onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }} onDrop={handleDrop} style={{ borderColor: isDragging ? 'var(--accent)' : 'var(--dropzone-border)' }}>
       <input type="file" multiple={isMultiple} accept={accept} ref={fileInputRef} onChange={(e) => onFilesSelected(Array.from(e.target.files))} className="file-input-hidden" />
-      <div className="upload-btn" style={{ pointerEvents: 'none', maxWidth: '250px' }}><span>+</span> Select {isMultiple ? "files" : "file"}</div>
-      <p style={{ marginTop: '20px', fontSize: '15px', color: 'var(--text-muted)', fontWeight: '500' }}>{isDragging ? (<span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Drop it right here! 🎯</span>) : files.length > 0 ? (<span style={{ color: '#10b981', fontWeight: 'bold' }}>✅ {files.length} file(s) ready!</span>) : ("or drag and drop files here")}</p>
+      <div style={{ width: '48px', height: '48px', background: 'var(--bg-card)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', marginBottom: '15px', boxShadow: 'var(--shadow-sm)' }}>📁</div>
+      <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '5px' }}>Click to upload {isMultiple ? "files" : "a file"}</div>
+      <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>{files.length > 0 ? <span style={{ color: '#10b981', fontWeight: 'bold' }}>{files.length} file(s) selected</span> : "or drag and drop them here"}</p>
     </div>
   );
 }
@@ -273,12 +269,12 @@ function WatermarkPDF({ userEmail }) {
 }
 
 function TextExtractionTool({ title, desc, endpoint, isTranslate, userEmail }) {
-  const [files, setFiles] = useState([]); const [lang, setLang] = useState('es'); const [text, setText] = useState(''); const [isProcessing, setIsProcessing] = useState(false);
+  const [files, setFiles] = useState([]); const [lang, setLang] = useState('es'); const [text, setText] = useState(''); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if(files.length===0)return; setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('user_email', userEmail); if (isTranslate) formData.append('lang', lang);
     try { const response = await axios.post(`${API_URL}/api/${endpoint}`, formData); setText(response.data.text); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
-  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="AI is reading your document... 🤖" />}<div className="breadcrumb" onClick={() => window.location.href='/'}>← Back to Workspace</div><div className="page-header"><h1>{title}</h1><p>{desc}</p></div><MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />{files.length > 0 && !text && isTranslate && (<select className="input-field" onChange={(e) => setLang(e.target.value)}><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option></select>)}<br/>{files.length > 0 && !text && <button className="upload-btn" onClick={handleProcess}>Process</button>}{text && (<div style={{ marginTop: '20px', background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-soft)' }}><button className="btn-secondary" onClick={() => navigator.clipboard.writeText(text)}>Copy to Clipboard</button><textarea readOnly value={text} style={{ width: '100%', height: '300px', padding: '15px', background: 'var(--bg-main)', color: 'var(--text-main)', border: '1px solid var(--border-soft)', borderRadius: '8px' }} /></div>)}</div>);
+  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="AI is reading your document... 🤖" />}<div className="breadcrumb" onClick={() => navigate('/')}>← Back to Workspace</div><div className="page-header"><h1>{title}</h1><p>{desc}</p></div><MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />{files.length > 0 && !text && isTranslate && (<select className="input-field" onChange={(e) => setLang(e.target.value)}><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option></select>)}<br/>{files.length > 0 && !text && <button className="upload-btn" onClick={handleProcess}>Process</button>}{text && (<div style={{ marginTop: '20px', background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-soft)' }}><button className="btn-secondary" onClick={() => navigator.clipboard.writeText(text)}>Copy to Clipboard</button><textarea readOnly value={text} style={{ width: '100%', height: '300px', padding: '15px', background: 'var(--bg-main)', color: 'var(--text-main)', border: '1px solid var(--border-soft)', borderRadius: '8px' }} /></div>)}</div>);
 }
 
 function SignPDF({ userEmail }) {
@@ -291,44 +287,43 @@ function SignPDF({ userEmail }) {
 }
 
 function AtsScanner({ userEmail }) {
-  const [files, setFiles] = useState([]); const [result, setResult] = useState(null); const [isProcessing, setIsProcessing] = useState(false);
+  const [files, setFiles] = useState([]); const [result, setResult] = useState(null); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('user_email', userEmail);
     try { const response = await axios.post(`${API_URL}/api/ats-scan`, formData); setResult(response.data); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
-  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="AI is reading resume... 🤖" />}<div className="breadcrumb" onClick={() => window.location.href='/'}>← Back</div><div className="page-header"><h1>ATS Resume Scan</h1><p>Test your resume against corporate AI filters.</p></div><MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />{files.length > 0 && !result && <button className="upload-btn" onClick={handleProcess}>Scan Resume</button>}{result && (<div style={{ background: 'var(--bg-card)', padding: '40px', borderRadius: '12px', border: '1px solid var(--border-soft)', textAlign: 'center' }}><p style={{margin:0, color:'var(--text-muted)'}}>ATS MATCH SCORE</p><h2 style={{fontSize: '72px', margin: '10px 0', color: result.score > 70 ? '#10b981' : '#ef4444'}}>{result.score}/100</h2><p style={{fontSize: '16px', fontWeight: 'bold'}}>Action Verbs Found: {result.verbs_found}</p><p style={{color: 'var(--text-muted)'}}>{result.feedback}</p></div>)}</div>);
+  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="AI is reading resume... 🤖" />}<div className="breadcrumb" onClick={() => navigate('/')}>← Back</div><div className="page-header"><h1>ATS Resume Scan</h1><p>Test your resume against corporate AI filters.</p></div><MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />{files.length > 0 && !result && <button className="upload-btn" onClick={handleProcess}>Scan Resume</button>}{result && (<div style={{ background: 'var(--bg-card)', padding: '40px', borderRadius: '12px', border: '1px solid var(--border-soft)', textAlign: 'center' }}><p style={{margin:0, color:'var(--text-muted)'}}>ATS MATCH SCORE</p><h2 style={{fontSize: '72px', margin: '10px 0', color: result.score > 70 ? '#10b981' : '#ef4444'}}>{result.score}/100</h2><p style={{fontSize: '16px', fontWeight: 'bold'}}>Action Verbs Found: {result.verbs_found}</p><p style={{color: 'var(--text-muted)'}}>{result.feedback}</p></div>)}</div>);
 }
 
 function ComparePDF({ userEmail }) {
-  const [files, setFiles] = useState([]); const [result, setResult] = useState(null); const [isProcessing, setIsProcessing] = useState(false);
+  const [files, setFiles] = useState([]); const [result, setResult] = useState(null); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async () => {
     if(files.length !== 2) return alert("Upload EXACTLY 2 PDFs!"); setIsProcessing(true); const formData = new FormData(); formData.append('files', files[0]); formData.append('files', files[1]); formData.append('user_email', userEmail);
     try { const response = await axios.post(`${API_URL}/api/compare`, formData); setResult(response.data); } catch(err) { alert("Error"); } finally { setIsProcessing(false); }
   };
-  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="Analyzing documents..." />}<div className="breadcrumb" onClick={() => window.location.href='/'}>← Back</div><div className="page-header"><h1>Compare PDFs</h1><p>Upload Version 1 and Version 2 to find differences.</p></div><MassiveDropzone accept=".pdf" isMultiple={true} onFilesSelected={setFiles} files={files} />{files.length === 2 && !result && <button className="upload-btn" onClick={handleProcess}>Find Differences</button>}{result && (<div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '12px', border: '1px solid var(--border-soft)', marginTop: '20px' }}><h3>{result.total_changes} Changes Found</h3><div style={{display: 'flex', gap: '20px'}}><div style={{flex: 1, background: 'rgba(239, 68, 68, 0.1)', padding: '15px', borderRadius: '8px', color: '#b91c1c'}}><b>Deleted Text:</b><ul style={{paddingLeft: '20px'}}>{result.removed.map((t, i) => <li key={i}>{t}</li>)}</ul></div><div style={{flex: 1, background: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '8px', color: '#15803d'}}><b>Added Text:</b><ul style={{paddingLeft: '20px'}}>{result.added.map((t, i) => <li key={i}>{t}</li>)}</ul></div></div></div>)}</div>);
+  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="Analyzing documents..." />}<div className="breadcrumb" onClick={() => navigate('/')}>← Back</div><div className="page-header"><h1>Compare PDFs</h1><p>Upload Version 1 and Version 2 to find differences.</p></div><MassiveDropzone accept=".pdf" isMultiple={true} onFilesSelected={setFiles} files={files} />{files.length === 2 && !result && <button className="upload-btn" onClick={handleProcess}>Find Differences</button>}{result && (<div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '12px', border: '1px solid var(--border-soft)', marginTop: '20px' }}><h3>{result.total_changes} Changes Found</h3><div style={{display: 'flex', gap: '20px'}}><div style={{flex: 1, background: 'rgba(239, 68, 68, 0.1)', padding: '15px', borderRadius: '8px', color: '#b91c1c'}}><b>Deleted Text:</b><ul style={{paddingLeft: '20px'}}>{result.removed.map((t, i) => <li key={i}>{t}</li>)}</ul></div><div style={{flex: 1, background: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '8px', color: '#15803d'}}><b>Added Text:</b><ul style={{paddingLeft: '20px'}}>{result.added.map((t, i) => <li key={i}>{t}</li>)}</ul></div></div></div>)}</div>);
 }
 
 function WorkflowBuilder({ userEmail }) {
-  const [files, setFiles] = useState([]); const [isProcessing, setIsProcessing] = useState(false); const [actions, setActions] = useState({ compress: false, watermark: false, protect: false }); const [watermarkText, setWatermarkText] = useState('CONFIDENTIAL'); const [password, setPassword] = useState('');
+  const [files, setFiles] = useState([]); const [isProcessing, setIsProcessing] = useState(false); const [actions, setActions] = useState({ compress: false, watermark: false, protect: false }); const [watermarkText, setWatermarkText] = useState('CONFIDENTIAL'); const [password, setPassword] = useState(''); const navigate = useNavigate();
   const toggleAction = (key) => setActions({ ...actions, [key]: !actions[key] });
   const handleProcess = async () => {
-    if (files.length === 0) return; const actionList = Object.keys(actions).filter(k => actions[k]); if (actionList.length === 0) return alert("Select an action!");
+    if (files.length === 0) return alert("Upload a PDF first!"); const actionList = Object.keys(actions).filter(k => actions[k]); if (actionList.length === 0) return alert("Select an action!");
     setIsProcessing(true); const formData = new FormData(); formData.append('file', files[0]); formData.append('actions', JSON.stringify(actionList)); formData.append('watermark_text', watermarkText); formData.append('password', password); formData.append('user_email', userEmail);
-    try { const response = await axios.post(`${API_URL}/api/workflow`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Final_Workflow.pdf'); document.body.appendChild(link); link.click(); window.location.href = '/'; } catch (error) { alert("Error"); } finally { setIsProcessing(false); }
+    try { const response = await axios.post(`${API_URL}/api/workflow`, formData, { responseType: 'blob' }); const url = window.URL.createObjectURL(new Blob([response.data])); const link = document.createElement('a'); link.href = url; link.setAttribute('download', 'Final_Workflow.pdf'); document.body.appendChild(link); link.click(); navigate('/'); } catch (error) { alert("Workflow failed."); } finally { setIsProcessing(false); }
   };
-  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="Running Pipeline..." />}<div className="breadcrumb" onClick={() => window.location.href='/'}>← Back</div><div className="page-header"><h1>Automated Workflow</h1><p>Chain multiple tools together.</p></div><MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />{files.length > 0 && (<div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '16px', border: '1px solid var(--border-soft)' }}><h3 style={{ marginTop: 0 }}>Select Pipeline Actions:</h3><label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '10px' }}><input type="checkbox" style={{ transform: 'scale(1.5)' }} checked={actions.compress} onChange={() => toggleAction('compress')} /><span style={{ fontWeight: '600' }}>🗜️ Heavy Compression</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '10px' }}><input type="checkbox" style={{ transform: 'scale(1.5)' }} checked={actions.watermark} onChange={() => toggleAction('watermark')} /><span style={{ fontWeight: '600', flex: 1 }}>💧 Add Watermark</span>{actions.watermark && <input type="text" className="input-field" style={{ margin: 0, width: '200px' }} value={watermarkText} onChange={e => setWatermarkText(e.target.value)} />}</label><label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '20px' }}><input type="checkbox" style={{ transform: 'scale(1.5)' }} checked={actions.protect} onChange={() => toggleAction('protect')} /><span style={{ fontWeight: '600', flex: 1 }}>🔒 Add Password</span>{actions.protect && <input type="password" className="input-field" style={{ margin: 0, width: '200px' }} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />}</label><button className="upload-btn" onClick={handleProcess}>Run Pipeline 🚀</button></div>)}</div>);
+  return (<div className="tool-workspace">{isProcessing && <LoadingOverlay message="Running Pipeline..." />}<div className="breadcrumb" onClick={() => navigate('/')}>← Back</div><div className="page-header"><h1>Automated Workflow</h1><p>Chain multiple tools together.</p></div><MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />{files.length > 0 && (<div style={{ background: 'var(--bg-card)', padding: '30px', borderRadius: '16px', border: '1px solid var(--border-soft)' }}><h3 style={{ marginTop: 0 }}>Select Pipeline Actions:</h3><label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '10px' }}><input type="checkbox" style={{ transform: 'scale(1.5)' }} checked={actions.compress} onChange={() => toggleAction('compress')} /><span style={{ fontWeight: '600' }}>🗜️ Heavy Compression</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '10px' }}><input type="checkbox" style={{ transform: 'scale(1.5)' }} checked={actions.watermark} onChange={() => toggleAction('watermark')} /><span style={{ fontWeight: '600', flex: 1 }}>💧 Add Watermark</span>{actions.watermark && <input type="text" className="input-field" style={{ margin: 0, width: '200px' }} value={watermarkText} onChange={e => setWatermarkText(e.target.value)} />}</label><label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '20px' }}><input type="checkbox" style={{ transform: 'scale(1.5)' }} checked={actions.protect} onChange={() => toggleAction('protect')} /><span style={{ fontWeight: '600', flex: 1 }}>🔒 Add Password</span>{actions.protect && <input type="password" className="input-field" style={{ margin: 0, width: '200px' }} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />}</label><button className="upload-btn" onClick={handleProcess}>Run Pipeline 🚀</button></div>)}</div>);
 }
 
 function ChatWithPDF({ userEmail }) {
-  const [files, setFiles] = useState([]); const [question, setQuestion] = useState(''); const [chatLog, setChatLog] = useState([]); const [isProcessing, setIsProcessing] = useState(false);
+  const [files, setFiles] = useState([]); const [question, setQuestion] = useState(''); const [chatLog, setChatLog] = useState([]); const [isProcessing, setIsProcessing] = useState(false); const navigate = useNavigate();
   const handleProcess = async (e) => {
     e.preventDefault(); if (files.length === 0 || !question) return; const newLog = [...chatLog, { role: 'user', text: question }]; setChatLog(newLog); setQuestion(''); setIsProcessing(true);
     const formData = new FormData(); formData.append('file', files[0]); formData.append('question', question); formData.append('user_email', userEmail);
     try { const response = await axios.post(`${API_URL}/api/chat`, formData); setChatLog([...newLog, { role: 'ai', text: response.data.answer }]); } catch(err) { alert("Error."); } finally { setIsProcessing(false); }
   };
-  return (<div className="tool-workspace"><div className="breadcrumb" onClick={() => window.location.href='/'}>← Back</div><div className="page-header"><h1>Chat with PDF</h1><p>Ask our AI assistant questions.</p></div>{files.length === 0 ? (<MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />) : (<div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-soft)', minHeight: '400px', display: 'flex', flexDirection: 'column' }}><div style={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>{chatLog.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '100px' }}>Ask a question to begin.</p>}{chatLog.map((msg, idx) => (<div key={idx} style={{ textAlign: msg.role === 'user' ? 'right' : 'left', marginBottom: '15px' }}><span style={{ display: 'inline-block', padding: '12px 16px', borderRadius: '12px', background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-hover)', color: msg.role === 'user' ? 'white' : 'var(--text-main)' }}>{msg.text}</span></div>))}</div><form onSubmit={handleProcess} style={{ display: 'flex', gap: '10px' }}><input type="text" className="input-field" style={{ margin: 0, flex: 1 }} placeholder="Type question..." value={question} onChange={e => setQuestion(e.target.value)} required /><button type="submit" className="upload-btn" style={{ width: 'auto' }} disabled={isProcessing}>Ask</button></form></div>)}</div>);
+  return (<div className="tool-workspace"><div className="breadcrumb" onClick={() => navigate('/')}>← Back</div><div className="page-header"><h1>Chat with PDF</h1><p>Ask our AI assistant questions.</p></div>{files.length === 0 ? (<MassiveDropzone accept=".pdf" isMultiple={false} onFilesSelected={setFiles} files={files} />) : (<div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-soft)', minHeight: '400px', display: 'flex', flexDirection: 'column' }}><div style={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>{chatLog.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '100px' }}>Ask a question to begin.</p>}{chatLog.map((msg, idx) => (<div key={idx} style={{ textAlign: msg.role === 'user' ? 'right' : 'left', marginBottom: '15px' }}><span style={{ display: 'inline-block', padding: '12px 16px', borderRadius: '12px', background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-hover)', color: msg.role === 'user' ? 'white' : 'var(--text-main)' }}>{msg.text}</span></div>))}</div><form onSubmit={handleProcess} style={{ display: 'flex', gap: '10px' }}><input type="text" className="input-field" style={{ margin: 0, flex: 1 }} placeholder="Type question..." value={question} onChange={e => setQuestion(e.target.value)} required /><button type="submit" className="upload-btn" style={{ width: 'auto' }} disabled={isProcessing}>Ask</button></form></div>)}</div>);
 }
-
 
 // --- MAIN APP ---
 function MainApp() {
@@ -361,7 +356,7 @@ function MainApp() {
       <div className="main-content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/account" element={<AccountDashboard userEmail={userEmail} />} />
+          <Route path="/account" element={<AccountDashboard userEmail={userEmail} setUserEmail={setUserEmail} />} />
           <Route path="/admin" element={isGodMode ? <AdminDashboard /> : <Navigate to="/" />} />
           
           <Route path="/workflow" element={<WorkflowBuilder userEmail={userEmail} />} />
@@ -376,8 +371,8 @@ function MainApp() {
           <Route path="/flatten" element={<ToolTemplate title="Flatten PDF" desc="Anti-copy tool." accept=".pdf" endpoint="flatten" userEmail={userEmail} />} />
           <Route path="/merge" element={<ToolTemplate title="Merge PDF" desc="Combine PDFs." accept=".pdf" isMultiple={true} endpoint="merge" userEmail={userEmail} />} />
           <Route path="/split" element={<ToolTemplate title="Split PDF" desc="Extract pages." accept=".pdf" endpoint="split" outputExt=".zip" userEmail={userEmail} />} />
-          <Route path="/compress" element={<ToolTemplate title="Compress PDF" desc="Reduce file size." accept=".pdf" endpoint="compress" userEmail={userEmail} />} />
-          <Route path="/crop" element={<ToolTemplate title="Crop PDF" desc="Trim white margins." accept=".pdf" endpoint="crop" userEmail={userEmail} />} />
+          <Route path="/compress" element={<ToolTemplate title="Compress PDF" desc="Reduce size." accept=".pdf" endpoint="compress" userEmail={userEmail} />} />
+          <Route path="/crop" element={<ToolTemplate title="Crop PDF" desc="Trim margins." accept=".pdf" endpoint="crop" userEmail={userEmail} />} />
           <Route path="/img2pdf" element={<ToolTemplate title="Image to PDF" desc="JPG to PDF." accept="image/*" endpoint="img2pdf" userEmail={userEmail} />} />
           <Route path="/pdf2jpg" element={<ToolTemplate title="PDF to JPG" desc="Extract images." accept=".pdf" endpoint="pdf2jpg" outputExt=".zip" userEmail={userEmail} />} />
           <Route path="/pdf2word" element={<ToolTemplate title="PDF to Word" desc="PDF to Docx." accept=".pdf" endpoint="pdf2word" outputExt=".docx" userEmail={userEmail} />} />
@@ -386,7 +381,7 @@ function MainApp() {
           <Route path="/remove-pages" element={<CustomInputTool title="Remove Pages" desc="e.g. 1, 3" endpoint="remove-pages" inputName="pages" inputPlaceholder="e.g. 1, 3" userEmail={userEmail} />} />
           <Route path="/rotate" element={<CustomInputTool title="Rotate PDF" desc="e.g. 90, 180" endpoint="rotate" inputName="degrees" inputPlaceholder="90" userEmail={userEmail} />} />
           <Route path="/watermark" element={<WatermarkPDF userEmail={userEmail} />} />
-          <Route path="/remove-watermark" element={<CustomInputTool title="Remove Watermark" desc="Erase exact text." endpoint="remove-watermark" inputName="text" inputPlaceholder="e.g. DRAFT" userEmail={userEmail} />} />
+          <Route path="/remove-watermark" element={<CustomInputTool title="Remove Watermark" desc="Erase text." endpoint="remove-watermark" inputName="text" inputPlaceholder="e.g. DRAFT" userEmail={userEmail} />} />
           <Route path="/protect" element={<CustomInputTool title="Protect PDF" desc="Add a password" endpoint="protect" inputName="password" inputPlaceholder="Secret Password" userEmail={userEmail} />} />
           <Route path="/unlock" element={<CustomInputTool title="Unlock PDF" desc="Enter password" endpoint="unlock" inputName="password" inputPlaceholder="Current Password" userEmail={userEmail} />} />
           <Route path="/redact" element={<CustomInputTool title="Redact PDF" desc="Black out a word." endpoint="redact" inputName="word" inputPlaceholder="e.g. Secret" userEmail={userEmail} />} />
@@ -402,8 +397,8 @@ function MainApp() {
 
 export default function App() {
   return (
-    <GoogleOAuthProvider clientId="1040375924083-testclientid.apps.googleusercontent.com">
-      <BrowserRouter><MainApp /></BrowserRouter>
-    </GoogleOAuthProvider>
+    <BrowserRouter>
+      <MainApp />
+    </BrowserRouter>
   );
 }

@@ -7,7 +7,7 @@ from typing import Optional
 from pdf2docx import Converter
 import os
 import zipfile
-import sqlite3
+import psycopg2 # NEW: Postgres Library!
 import hashlib
 import io
 import json
@@ -27,18 +27,24 @@ app.add_middleware(
         "http://localhost:3000", 
         "http://127.0.0.1:3000", 
         "http://localhost:8080",
-        "https://pdf-master-lemon.vercel.app" # YOUR VERCEL LINK
+        "https://pdf-master-lemon.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# YOUR NEW GLOBAL CLOUD DATABASE LINK! (Notice the # is changed to %23)
+DB_URL = "postgresql://postgres.fboriuonqszvkzznwabb:%23DjF.46L8mSdnUJ@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
+
+def get_db_connection():
+    return psycopg2.connect(DB_URL)
+
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, password TEXT)')
-    cursor.execute('CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, action TEXT, filename TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS history (id SERIAL PRIMARY KEY, email TEXT, action TEXT, filename TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     conn.commit()
     conn.close()
 
@@ -48,9 +54,9 @@ def hash_password(password: str): return hashlib.sha256(password.encode()).hexdi
 
 def log_user_action(email: str, action: str, filename: str):
     if not email: return
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO history (email, action, filename) VALUES (?, ?, ?)", (email, action, filename))
+    cursor.execute("INSERT INTO history (email, action, filename) VALUES (%s, %s, %s)", (email, action, filename))
     conn.commit()
     conn.close()
 
@@ -58,57 +64,53 @@ def log_user_action(email: str, action: str, filename: str):
 @app.post("/signup")
 async def signup(data: dict):
     email, password = data.get("email"), data.get("password")
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     try:
-        conn.cursor().execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hash_password(password)))
+        conn.cursor().execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hash_password(password)))
         conn.commit()
         return {"message": "Account created successfully!"}
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
         raise HTTPException(status_code=400, detail="User already exists")
     finally: conn.close()
 
 @app.post("/login")
 async def login(data: dict):
     email, password = data.get("email"), data.get("password")
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email=? AND password=?", (email, hash_password(password)))
+    cursor.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, hash_password(password)))
     user = cursor.fetchone()
     conn.close()
     if user: return {"message": "Login successful", "email": email}
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
-# THE NEW PASSWORD RESET ROUTE!
 @app.post("/api/reset-password")
 async def reset_password(data: dict):
     email = data.get("email")
     new_password = data.get("new_password")
-    
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email=?", (email,))
-    
+    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=404, detail="Email not found. Please create an account.")
-        
-    cursor.execute("UPDATE users SET password=? WHERE email=?", (hash_password(new_password), email))
+    cursor.execute("UPDATE users SET password=%s WHERE email=%s", (hash_password(new_password), email))
     conn.commit()
     conn.close()
     return {"message": "Password reset successfully!"}
 
 @app.get("/api/history/{email}")
 async def get_history(email: str):
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT action, filename, timestamp FROM history WHERE email=? ORDER BY id DESC LIMIT 10", (email,))
+    cursor.execute("SELECT action, filename, timestamp FROM history WHERE email=%s ORDER BY id DESC LIMIT 10", (email,))
     rows = cursor.fetchall()
     conn.close()
     return [{"action": r[0], "filename": r[1], "time": r[2]} for r in rows]
 
 @app.get("/api/admin/stats")
 async def admin_stats():
-    conn = sqlite3.connect("users.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM users")
     total_users = cursor.fetchone()[0]
